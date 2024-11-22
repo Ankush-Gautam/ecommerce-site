@@ -8,14 +8,12 @@ import Confetti from 'react-confetti';
 const PurchaseSuccessPage = () => {
   const [isProcessing, setIsProcessing] = useState(true);
   const { clearCart } = useCartStore();
-  const [error, setError] = useState(null);
+  const [error] = useState(null);
 
   useEffect(() => {
-    const handleCheckoutSuccess = async (sessionId) => {
+    const handleCheckoutSuccess = async () => {
       try {
-        await axios.post('/payments/checkout-success', {
-          sessionId,
-        });
+        await axios.post('/payments/checkout-success');
         clearCart();
       } catch (error) {
         console.log(error);
@@ -24,15 +22,7 @@ const PurchaseSuccessPage = () => {
       }
     };
 
-    const sessionId = new URLSearchParams(window.location.search).get(
-      'session_id'
-    );
-    if (sessionId) {
-      handleCheckoutSuccess(sessionId);
-    } else {
-      setIsProcessing(false);
-      setError('No session ID found in the URL');
-    }
+    handleCheckoutSuccess();
   }, [clearCart]);
 
   if (isProcessing) return 'Processing...';

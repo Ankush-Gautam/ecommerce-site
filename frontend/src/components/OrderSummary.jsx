@@ -2,15 +2,13 @@ import { motion } from 'framer-motion';
 import { useCartStore } from '../stores/useCartStore';
 import { Link } from 'react-router-dom';
 import { MoveRight } from 'lucide-react';
-import { loadStripe } from '@stripe/stripe-js';
 import axios from '../lib/axios';
-
-const stripePromise = loadStripe(
-  'pk_test_51KZYccCoOZF2UhtOwdXQl3vcizup20zqKqT9hVUIsVzsdBrhqbUI2fE0ZdEVLdZfeHjeyFXtqaNsyCJCmZWnjNZa00PzMAjlcL'
-);
+import { useNavigate } from 'react-router-dom';
 
 const OrderSummary = () => {
-  const { total, subtotal, coupon, isCouponApplied, cart } = useCartStore();
+  const navigate = useNavigate();
+
+  const { total, subtotal, cart } = useCartStore();
 
   const savings = subtotal - total;
   const formattedSubtotal = subtotal.toFixed(2);
@@ -18,19 +16,17 @@ const OrderSummary = () => {
   const formattedSavings = savings.toFixed(2);
 
   const handlePayment = async () => {
-    const stripe = await stripePromise;
     const res = await axios.post('/payments/create-checkout-session', {
       products: cart,
-      couponCode: coupon ? coupon.code : null,
     });
 
     const session = res.data;
-    const result = await stripe.redirectToCheckout({
-      sessionId: session.id,
-    });
 
-    if (result.error) {
-      console.error('Error:', result.error);
+    // Optional: Handle session details if needed
+    if (session) {
+      navigate('/purchase-success');
+    } else {
+      console.error('Payment session creation failed:', session.message);
     }
   };
 
@@ -63,16 +59,6 @@ const OrderSummary = () => {
             </dl>
           )}
 
-          {coupon && isCouponApplied && (
-            <dl className='flex items-center justify-between gap-4'>
-              <dt className='text-base font-normal text-gray-300'>
-                Coupon ({coupon.code})
-              </dt>
-              <dd className='text-base font-medium text-indigo-500'>
-                -{coupon.discountPercentage}%
-              </dd>
-            </dl>
-          )}
           <dl className='flex items-center justify-between gap-4 border-t border-gray-600 pt-2'>
             <dt className='text-base font-bold text-white'>Total</dt>
             <dd className='text-base font-bold text-indigo-500'>
